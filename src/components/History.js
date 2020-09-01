@@ -23,8 +23,7 @@ this.onLoad2()
 
   }
  
-  onLoad1=()=>{
-    setTimeout(async()=>{
+  onLoad1=async ()=>{
     try {
       let values= await AsyncStorage.getItem('qrcodes')
       
@@ -38,6 +37,8 @@ this.onLoad2()
        
         //console.log('state'+this.state.Savedcode);
   
+      } else {
+        this.setState({Mydata})
       }
      
       }
@@ -45,10 +46,9 @@ this.onLoad2()
   alert("async storage get data error"+err)
   console.log('async retrieve error')
   }
-},1000)
+
   }
-  onLoad2=()=>{
-    setTimeout(async()=>{
+  onLoad2=async()=>{
     try {
       let values= await AsyncStorage.getItem('barcodes')
       if(values!==null){
@@ -63,34 +63,19 @@ this.onLoad2()
 
   
       }
+      else {
+        this.setState({Mydatabar})
+      }
      
       }
      catch (err) {
   alert("async storage get data bar codes error"+err)
   console.log('async retrieve error')
   }
-},1000)
 }
-  
-  
-// }
-// remove_data = async(codeid) => {
-//   try{
-//       let usersJSON= await AsyncStorage.getItem('qrcodes');
-//       let usersArray = JSON.parse(usersJSON);
-//       alteredUsers = usersArray.filter(function(index){
-//           return index !== codeid.index
 
-//       })
-//       AsyncStorage.setItem('qrcodes', JSON.stringify(alteredUsers));
-//       this.setState({
-//          Mydata:alteredUsers
-//       })
-//   }
-//   catch(error){
-//       console.log(error)
-//   }
-// };
+  
+
 async remove_data(id)  {
   try {
     this.state.Mydata.splice(id, 1);
