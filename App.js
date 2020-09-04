@@ -1,6 +1,6 @@
 import 'react-native-gesture-handler'
 
-import React from 'react';
+import React, { lazy, useState } from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -23,15 +23,27 @@ import {NavigationContainer} from '@react-navigation/native'
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs'
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import History from './src/components/History'
+const getScreenRegisteredFunctions = navState => {
 
+  const { routes, index, params } = navState;
+
+  if (navState.hasOwnProperty('index')) {
+    return getScreenRegisteredFunctions(routes[index]);
+  }
+  else {
+    return params;
+  }
+}
 const Tab= createBottomTabNavigator();
 const TabNav=()=>{
   return(
   <Tab.Navigator
+  
   screenOptions={({ route }) => ({
+  
     tabBarIcon: ({ focused, color, size }) => {
       let iconName;
-
+      
       if (route.name === 'QR scan') {
         iconName = focused
           ? 'ios-scan'
@@ -49,11 +61,15 @@ const TabNav=()=>{
   tabBarOptions={{
     activeTintColor: 'tomato',
     inactiveTintColor: 'gray',
+  
   }}
+  
+
+  
   >
-    <Tab.Screen name="QR scan" component={QRCodeScanner} />
+    <Tab.Screen  name="QR scan" component={QRCodeScanner}  />
     <Tab.Screen name="Bar scan" component={Barcodescanner} />
-    <Tab.Screen name="Search History" component={History} />
+    <Tab.Screen name="Search History" component={History}    />
 
   </Tab.Navigator>
   )

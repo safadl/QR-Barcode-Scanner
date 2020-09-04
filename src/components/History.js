@@ -1,46 +1,46 @@
 
-import React, { Component } from 'react';
+import React, { Component, useState } from 'react';
 import AsyncStorage from '@react-native-community/async-storage'
-import {Text,View,FlatList,ScrollView} from 'react-native'
+import {Text,View,FlatList,ScrollView, Linking,StyleSheet} from 'react-native'
 import {Button,Card,Avatar,IconButton, ActivityIndicator} from 'react-native-paper'
+import { TouchableOpacity, TouchableHighlight } from 'react-native-gesture-handler';
 
-// import { FlatList } from 'react-native-gesture-handler'; 
+
+
+
 class History extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            Mydata:[], // changed this from "" to []
+            Mydata:[], 
             Mydatabar:[],
+            update:false
+         
           };
-    }
+       
+        }
+       
+    componentDidMount() {
 
-    componentDidMount(){
-   
+const { navigation } = this.props;
+this.focusListener = navigation.addListener("focus", () => {
+console.log('focused **************************')
 this.onLoad1()
 this.onLoad2()
-// AsyncStorage.removeItem('qrcodes');
-// AsyncStorage.removeItem('barcodes');
 
+});
   }
- 
+
+
   onLoad1=async ()=>{
     try {
-      let values= await AsyncStorage.getItem('qrcodes')
-      
-      if(values!==null){
-        let data=[...this.state.Mydata,...JSON.parse(values)]
- 
-        this.setState({Mydata:data})
-       // this.setState({Savedcode:values});
-        console.log('************data got from storage successfuly ***************', JSON.parse(values));
-        //alert('got successfuly'+JSON.parse(values));
-       
-        //console.log('state'+this.state.Savedcode);
-  
-      } else {
-        this.setState({Mydata})
-      }
      
+     
+      await AsyncStorage.getItem('qrcodes').then(data => {if(data!==null){
+      this.setState({ Mydata:JSON.parse(data)}); }});
+ 
+ // console.log('update value : '+this.state.update)
+  
       }
      catch (err) {
   alert("async storage get data error"+err)
@@ -49,24 +49,11 @@ this.onLoad2()
 
   }
   onLoad2=async()=>{
-    try {
-      let values= await AsyncStorage.getItem('barcodes')
-      if(values!==null){
-        let data=[...this.state.Mydatabar,...JSON.parse(values)]
- 
-        this.setState({Mydatabar:data})
-       // this.setState({Savedcode:values});
-        console.log('************data got from storage successfuly ***************', JSON.parse(values));
-        //alert('got successfuly'+JSON.parse(values));
-       
-        //console.log('state'+this.state.Savedcode);
 
-  
-      }
-      else {
-        this.setState({Mydatabar})
-      }
-     
+    try {
+
+   
+    await AsyncStorage.getItem('barcodes').then(data => {if(data!==null){this.setState({ Mydatabar:JSON.parse(data)})}});
       }
      catch (err) {
   alert("async storage get data bar codes error"+err)
@@ -74,6 +61,17 @@ this.onLoad2()
   }
 }
 
+///// clear function  
+removeEverything = async () => {
+  try {
+    await AsyncStorage.clear()
+ alert('Storage successfully cleared!')
+    this.setState({Mydata:[],Mydatabar:[]})
+  } catch (e) {
+    alert('Failed to clear the async storage.')
+  }
+  
+}
   
 
 async remove_data(id)  {
@@ -97,54 +95,46 @@ async remove_barcode(id)  {
   }
 };
   _renderItem = ({ item,index }) => (
-   
-    <ScrollView
-      style={{
-      
-      }}
-    >
-      {/* <Text style={{fontSize:18,padding:10}}>Website</Text> */}
-      {/* <View style={{flexDirection:'row'}}>
-        <Text style={{marginLeft:5,fontSize:15,padding:8,justifyContent:'flex-end'}}>{item}</Text>
-      
-   
+  
+console.log("my item is : "+item+" index: "+index),
 
-  </View> */}
+    <ScrollView
+    >
   <Card.Title
     title="Website"
     subtitle={item}
-    left={(props) => <Avatar.Icon {...props} icon="link" />}
-right={(props)=>  <View style={{padding:10}}><Button style={{marginLRight:0,marginBottom:10,alignSelf:'stretch'}}icon="delete" mode="contained"onPress={()=>this.remove_data(index)}>
+    left={(props) => <TouchableOpacity onPress={()=>this.OpenLink(item.toString())}><Avatar.Icon {...props} icon="link" /></TouchableOpacity>}
+right={(props)=>
+  <View style={{padding:10}}>
+    <Button style={{marginLRight:0,marginBottom:10,alignSelf:'stretch'}}icon="delete" mode="contained"onPress={()=>this.remove_data(index)}>
 Delete
-</Button></View> }
+</Button>
+</View> }
+
   />
-  
+
     </ScrollView>
+   
   );
   _renderItem2 = ({ item,index }) => (
-    
+   
     <ScrollView
       style={{
       
       }}
     >
-      {/* <Text style={{fontSize:18,padding:10}}>Website</Text> */}
-      {/* <View style={{flexDirection:'row'}}>
-        <Text style={{marginLeft:5,fontSize:15,padding:8,justifyContent:'flex-end'}}>{item}</Text>
-      
-   
-
-  </View> */}
+ 
   <Card.Title
     title="Barcode"
     subtitle={item}
-    left={(props) => <Avatar.Icon {...props} icon="barcode" backgroundColor='#6fcadc' />}
-right={(props)=><View style={{padding:10}}><Button color='#6fcadc'style={{marginLRight:0,marginBottom:10,alignSelf:'stretch',color:'#6fcadc'}}icon="delete" mode="contained" onPress={()=>this.remove_barcode(index)}>
+    left={(props) => <Avatar.Icon {...props} icon="barcode"  />} //backgroundColor='#6fcadc'
+right={(props)=><View style={{padding:10}}><Button style={{marginLRight:0,marginBottom:10,alignSelf:'stretch'}}icon="delete" mode="contained" onPress={()=>this.remove_barcode(index)}>
 Delete
 </Button></View> }
+//,color:'#6fcadc'
   />
-  
     </ScrollView>
+    
   );
   renderSeparator = () => (
     <View
@@ -154,32 +144,49 @@ Delete
       }}
     />
   );
+  OpenLink= (Mylink) => {
+
+    Linking.openURL(Mylink).catch(err =>
+      console.error('An error occured', err),
+     
+  )
+
+};
+listEmpty=()=>{
+  if(this.state.Mydata!==null&&this.state.Mydatabar!==null) 
+   return(
+<View style={{marginTop:"50%"}}><Text style={{textAlign:'center'}}>There is no results yet.</Text></View>
+  )
+}
     render() {
         return (
-        <ScrollView>
-          <Text style={{fontSize:30,padding:17,fontWeight:'bold'}}>History</Text>
-          <ScrollView style={{padding:15}}></ScrollView>
+          <ScrollView >
+          <View><Text style={{fontSize:23,padding:20,paddingBottom:30,fontWeight:'light',letterSpacing:2}}>History</Text>
+          <Button  color='#6fcadc' onPress={this.removeEverything}>Clear</Button>
+          </View> 
+        
+          <View style={{padding:15}}>
           <FlatList data={this.state.Mydata}
+          
           renderItem={this._renderItem}
-         // keyExtractor={(item, index) => index.toString()}
-           
+          keyExtractor={(item, index) => index.toString()}
           ItemSeparatorComponent={this.renderSeparator}
+          
           /> 
-        <View style={{borderColor:'grey',borderWidth:0.5}}></View>
+        
           <FlatList data={this.state.Mydatabar}
           renderItem={this._renderItem2}
-         // keyExtractor={(item, index) => index.toString()}
-           
+         keyExtractor={(item, index) => index.toString()}
           ItemSeparatorComponent={this.renderSeparator}
-          /> 
-          </ScrollView>
+          
+                /> 
+        </View>
+
+</ScrollView>
         );
     
   }
-// {/* <ActivityIndicator color='red'size={20} /> */}
-
-  
 
 }
-
 export default History;
+

@@ -1,6 +1,5 @@
 
 import React, { Component } from 'react';
-// import {IconButton} from 'react-native-paper'
 import {
 
   StyleSheet,
@@ -9,14 +8,13 @@ import {
   Linking,
   Dimensions,
   View,Button,Image,
-  TouchableHighlight
+  TouchableHighlight,Alert
 } from 'react-native';
 import _ from 'lodash'
 import QRCodeScanner from 'react-native-qrcode-scanner';
 import { RNCamera } from 'react-native-camera';
 import Icon from "react-native-vector-icons/MaterialIcons";
 import * as Animatable from "react-native-animatable"
-//import {IconButton} from 'react-native-paper'
 import AsyncStorage from '@react-native-community/async-storage'
 const SCREEN_HEIGHT = Dimensions.get("window").height;
 const SCREEN_WIDTH = Dimensions.get("window").width;
@@ -29,7 +27,7 @@ super(props)
       // switcher:true
       qr:"",
       Savedcode:"",
-      values:[]
+      values:[],
 
       
     }
@@ -48,15 +46,12 @@ super(props)
   }
 //////////////////
   onSuccess = (e) => {
-    
-   
-//this._retrieveData
-// console.log('my state'+this.state.Savedcode)
+    this._storeData(e)
       Linking.openURL(e.data).catch(err =>
         console.error('An error occured', err),
-       
+        alert('Unable to open link.')
+        
     )
-  
   
   };
   //////////////////
@@ -78,39 +73,33 @@ this.setState({
 })
 
 }
+
 /////////////// store data
 _storeData = async (e) => {
 try{
-  // let val=[]
-  // val.push(e.data)
+
   
   let oldValues= await AsyncStorage.getItem('qrcodes')
+  
   this.state.values=JSON.parse(oldValues)
-  if(oldValues==null){
+  if(oldValues!==null){
     this.setState({
-      values: [this.state.values,e.data]
+      values: [...this.state.values,e.data],
+      
+    })
+  
+  }else{
+    this.setState({
+      values:[this.state.values,e.data]
     })
   }
-  else{
-this.setState({
-  values: [...this.state.values,e.data]
-})
-  }
- AsyncStorage.setItem('qrcodes',JSON.stringify(this.state.values));
+  AsyncStorage.setItem('qrcodes',JSON.stringify(this.state.values));
  console.log('my data stored is : '+this.state.values)
- this.onSuccess(e)
 
 }
 catch (error) {
-
-
 alert("error : "+e.data+error)  
-
-
-
-
 }}
-
 
   render() {
     //console.log('my state after render() is : '+this.state.Savedcode),
@@ -120,13 +109,14 @@ alert("error : "+e.data+error)
 
       <QRCodeScanner
         fadeIn={true}
-        onRead={this.onRead,this.onSuccess,this._storeData}
+        onRead={this.onSuccess.bind(this)}
          
         //,this._retrieveData
         flashMode={RNCamera.Constants.FlashMode.auto}
         //buttonPositive={true}
     
-        reactivate={true}
+       reactivate={true}
+        reactivateTimeout={2000}
         showMarker={true}
       
         customMarker={<View style={styles.rectangleContainer}>
@@ -174,13 +164,13 @@ alert("error : "+e.data+error)
     );
   }
 }
-const overlayColor = "rgba(0,0,0,0.5)"; // this gives us a black color with a 50% transparency
+const overlayColor = "rgba(0,0,0,0.5)"; 
 
-const rectDimensions = SCREEN_WIDTH * 0.65; // this is equivalent to 255 from a 393 device width
+const rectDimensions = SCREEN_WIDTH * 0.65;
 
 
-const scanBarWidth = SCREEN_WIDTH * 0.46; // this is equivalent to 180 from a 393 device width
-const scanBarHeight = SCREEN_WIDTH * 0.0025; //this is equivalent to 1 from a 393 device width
+const scanBarWidth = SCREEN_WIDTH * 0.46; 
+const scanBarHeight = SCREEN_WIDTH * 0.0025; 
 const styles = StyleSheet.create({
  
 

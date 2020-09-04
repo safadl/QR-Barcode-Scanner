@@ -1,32 +1,68 @@
 
+
 import React, { Component } from 'react';
 import {
 Text,
 View,
 StyleSheet,
 Alert,
-TouchableOpacity,
-Image,
-Dimensions
+
+Dimensions,
+
 } from 'react-native';
 import {RNCamera} from 'react-native-camera';
 import AsyncStorage from '@react-native-community/async-storage'
+import BarcodeMask from 'react-native-barcode-mask'
+import { Snackbar,Paragraph, Dialog, Portal,Button,Provider  } from 'react-native-paper';
+import { delay } from 'lodash';
 
 export default class Barcodescanner extends Component {
 constructor(props) {
 super(props);
 this.handleTourch = this.handleTourch.bind(this);
+
 this.state = {
 torchOn: false,
-values:[]
+values:[],
+visible:false
 }
-console.log("values codes")     
+console.log("values codes")   
+this.barcodeCodes = []; 
+this.getValues=[];
 
 }
-onBarCodeRead = (e) => {
-Alert.alert("Barcode value is" + e.data, "Barcode type is" + e.type);
+
+
+ async onBarCodeRead(scanResult) {
+  if (scanResult.data !== null) {
+Alert.alert("Barcode value is : " + scanResult.data, "Barcode type is" + scanResult.type)
+
+
+this.props.navigation.navigate('Search History')
+
+  this._storeData(scanResult)
+
+ 
+ 
+  }
+
+
+// }
+return;
 
 }
+
+
+showDialog = () => {
+  this.setState({
+    visible:true
+  })
+}
+
+hideDialog = () => {
+  this.setState({visible:false})
+}
+  
 _storeData = async (e) => {
     try{
  
@@ -34,20 +70,20 @@ _storeData = async (e) => {
       let oldValues= await AsyncStorage.getItem('barcodes')
       this.state.values=JSON.parse(oldValues)
       
-      if(oldValues==null){
+      if(oldValues!==null){
         this.setState({
-          values: [this.state.values,e.data]
+          values: [...this.state.values,e.data]
         })
       }
       else{
-    this.setState({
-      values: [...this.state.values,e.data]
-    })
+        this.setState({
+          values:[this.state.values,e.data]
+        })
       }
 
      AsyncStorage.setItem('barcodes',JSON.stringify(this.state.values));
      console.log('my data stored is : '+this.state.values)
-     this.onBarCodeRead(e)
+     
     }
     catch (error) {
     
@@ -55,6 +91,8 @@ _storeData = async (e) => {
     alert("error : "+e.data+error)  
 
     }}
+
+
 render() {
     const CAM_VIEW_HEIGHT = Dimensions.get('screen').height * 1.5;
 const CAM_VIEW_WIDTH = Dimensions.get('screen').width;
@@ -66,29 +104,42 @@ const frameHeight = 250;
 
 const scanAreaX = leftMargin / CAM_VIEW_HEIGHT;
 const scanAreaY = topMargin / CAM_VIEW_WIDTH;
+const { shouldReadBarCode }  = this.state;
 
 return (
+  <Provider>
 <View style={styles.container}>
 
 <RNCamera
 style={styles.preview}
-FlashMode={this.state.torchOn ? RNCamera.Constants.FlashMode.on : RNCamera.Constants.FlashMode.off}
-onBarCodeRead={this.onBarCodeRead,this._storeData}
+onBarCodeRead={this.onBarCodeRead.bind(this)}
+shouldReadBarCode={true}
+detectedImageInEvent={true}
 ref={cam => this.camera = cam}
-
-
->
-
-</RNCamera>
-
-<View style={styles.bottomOverlay}>
-<TouchableOpacity onPress={() => this.handleTourch(this.state.torchOn)}>
-<Image style={styles.cameraIcon}
-source={this.state.torchOn === true ? require('../images/flasher_on.png') : require('../images/flasher_off.png')} />
-</TouchableOpacity>
+androidCameraPermissionOptions={{
+  title: 'Permission to use camera',
+  message: 'We need your permission to use your camera',
+  buttonPositive: 'Ok',
+  buttonNegative: 'Cancel',
+}}
+><BarcodeMask width={350} height={200} edgeColor={'#62B1F6'} showAnimatedLine={true} lineAnimationDuration={2000} edgeBorderWidth={1.5} animatedLineHeight={0.7} /></RNCamera>
+<View style={[styles.overlay, styles.topOverlay,styles.bottomOverlay]}>
+	  <Text style={styles.scanScreenMessage}>Please scan the barcode.</Text>
+	</View>
+ 
+  <Portal>
+        <Dialog visible={this.state.visible} onDismiss={this.hideDialog}>
+          <Dialog.Title>Alert</Dialog.Title>
+          <Dialog.Content>
+            <Paragraph>Barcode saved.</Paragraph>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={this.hideDialog}>Done</Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
 </View>
-</View>
-
+</Provider>
 )
 }
 handleTourch(value) {
@@ -127,4 +178,29 @@ flexDirection: "row",
 justifyContent: "space-between",
 
 },
+overlay: {
+  position: 'absolute',
+  padding: 16,
+  right: 0,
+  left: 0,
+  alignItems: 'center'
+},  bottomOverlay: {
+  bottom: 0,
+  backgroundColor: 'rgba(0,0,0,0.4)',
+  flexDirection: 'row',
+  justifyContent: 'center',
+  alignItems: 'center'
+},
+enterBarcodeManualButton: {
+  padding: 15,
+  backgroundColor: 'white',
+  borderRadius: 40
+},
+scanScreenMessage: {
+  fontSize: 14,
+  color: 'white',
+  textAlign: 'center',
+  alignItems: 'center',
+  justifyContent: 'center'
+}
 });
