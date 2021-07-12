@@ -1,1 +1,1 @@
-QR and Barcode scanner mobile applocation using React Native
+QR and Barcode scanner mobile application using React Native
